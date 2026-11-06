@@ -3,6 +3,7 @@ import { analyze } from '../src/services/analysis/index.js'
 import {
   analyzeSentiment,
   countWords,
+  detectCategory,
   extractKeywords,
 } from '../src/services/analysis/ruleBasedAnalyzer.js'
 
@@ -107,10 +108,75 @@ describe('analyze', () => {
       wordCount: 0,
     })
   })
+})
 
-  // placeholder until the category rules exist
-  it('returns one of the allowed categories', async () => {
-    const { category } = await analyze('Remember to email the team about the release')
-    expect(CATEGORIES).toContain(category)
+describe('category', () => {
+  it('detects code', () => {
+    const text = [
+      'const total = items.reduce((sum, item) => sum + item.price, 0);',
+      'console.log(total);',
+    ].join('\n')
+    expect(detectCategory(text)).toBe('Code')
+  })
+
+  it('detects a todo list', () => {
+    const text = [
+      'Weekend errands',
+      '- [ ] buy groceries',
+      '- [ ] pay the electricity bill',
+      '- [x] book dentist appointment',
+    ].join('\n')
+    expect(detectCategory(text)).toBe('Todo')
+  })
+
+  it('detects meeting notes', () => {
+    const text =
+      'Weekly sync with the design team. Discussed the new onboarding flow and agreed to ship it next sprint.'
+    expect(detectCategory(text)).toBe('Meeting')
+  })
+
+  it('detects an idea', () => {
+    const text =
+      'What if the app suggested tags as you type? Could be a nice side project to prototype over the holidays.'
+    expect(detectCategory(text)).toBe('Idea')
+  })
+
+  it('returns Other when nothing matches', () => {
+    expect(detectCategory('Lovely walk along the river this morning, the leaves are finally turning.')).toBe(
+      'Other',
+    )
+  })
+
+  it('returns Other when only a weak signal matches', () => {
+    // "maybe" is a weight-1 Idea signal, below MIN_SCORE on its own
+    expect(detectCategory('Maybe pick up some flowers on the way home.')).toBe('Other')
+  })
+
+  it('breaks a tie using the priority order', () => {
+    // "idea" scores 3 for Idea and "retro" scores 3 for Meeting, Meeting comes first in the order
+    expect(detectCategory('Idea from the retro: rotate who writes the release notes.')).toBe('Meeting')
+  })
+
+  it('keeps meeting notes as Meeting even with action items and bullets', () => {
+    const text = [
+      'Sprint planning meeting, Tuesday 10am',
+      'Attendees: Sam, Priya, Lee',
+      '- Agreed to move the launch to next week',
+      'Action items:',
+      '- Sam: need to fix the login bug by Friday',
+      '- Priya to send the updated mockups',
+    ].join('\n')
+    expect(detectCategory(text)).toBe('Meeting')
+  })
+
+  it('counts a repeated signal only once', () => {
+    // five "maybe"s would reach MIN_SCORE if each one added to the score
+    expect(detectCategory('Maybe the beach, maybe the mountains, maybe just stay home. Maybe, maybe.')).toBe(
+      'Other',
+    )
+  })
+
+  it('does not treat an English "select ... from" sentence as SQL', () => {
+    expect(detectCategory('Please select a date from the calendar')).not.toBe('Code')
   })
 })
