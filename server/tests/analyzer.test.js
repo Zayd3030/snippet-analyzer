@@ -179,4 +179,20 @@ describe('category', () => {
   it('does not treat an English "select ... from" sentence as SQL', () => {
     expect(detectCategory('Please select a date from the calendar')).not.toBe('Code')
   })
+
+  it.each(['select * from users where active = 1', 'select id, email from users'])(
+    'detects lowercase SQL as code (%j)',
+    (text) => {
+      expect(detectCategory(text)).toBe('Code')
+    },
+  )
+
+  it('does not treat code keywords in plain English as code', () => {
+    // "let me know" used to score as a code keyword
+    expect(detectCategory('We need to deploy the new pricing page, let me know')).not.toBe('Code')
+  })
+
+  it('does not treat "sync" on its own as a meeting', () => {
+    expect(detectCategory('Need to sync my phone with the laptop')).not.toBe('Meeting')
+  })
 })
