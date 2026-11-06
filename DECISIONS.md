@@ -46,3 +46,23 @@ Architectural choices, what was rejected, and why.
 - **Chose:** one error middleware. Malformed JSON → 400, other body-parser client errors keep their 4xx status, everything else is logged and returned as a generic 500. Unknown `/api` routes get a JSON 404.
 - **Rejected:** try/catch in each handler, and Express's default HTML error page.
 - **Why:** every error has the same `{ error }` shape, and stack traces stay in the server log instead of leaking to clients.
+
+## Analysis providers can be sync or async
+- **Chose:** `services/analysis/index.js` exposes `async analyze(text)` and calls the selected provider through it. The rule-based provider itself is synchronous.
+- **Rejected:** making every provider return a Promise itself (CLAUDE.md's original wording).
+- **Why:** callers always get a Promise either way, so swapping in Ollama later changes nothing upstream. The rule-based code and its unit tests stay plain synchronous functions. Unknown `ANALYZER` values log a warning and fall back to rules instead of crashing on startup.
+
+## Category detection: weighted signals with a threshold
+- **Chose:** each category has signals `{ match, weight }`, where a string matches a whole word or phrase and a RegExp matches the raw text. A matching signal adds its weight once. The highest total wins, a total below the threshold means `Other`, and ties go by a fixed priority order.
+- **Rejected:** counting every occurrence of a signal, and first-match-wins rule lists.
+- **Why:** counting each signal once stops long or repetitive text from winning on volume. Weights let strong signals (a code fence) outweigh weak ones (the word "function"). The fixed tie-break keeps results deterministic. The signal lists, weights, threshold and tie-break order themselves are written by the repo owner.
+
+## Sentiment: averaged word lists with a short negation window
+- **Chose:** small built-in positive and negative word lists. Score = the average of the matched words (+1 / -1), so it's always between -1 and 1. A negator flips the next sentiment word within 2 words. Labels use ±0.2 thresholds.
+- **Rejected:** a sentiment library (not allowed by the spec), and normalising by total word count.
+- **Why:** explainable in a minute and good enough for tagging. Averaging over matched words means a long neutral note with one "great" still reads positive rather than being diluted to zero. Known limits: no sarcasm, intensity ("good" vs "amazing"), domain context, or negation beyond the window.
+
+## One tokenizer for sentiment and keywords
+- **Chose:** a shared `tokenize()`: lowercase, Unicode letters and digits, apostrophes kept inside words, curly apostrophes normalised.
+- **Rejected:** separate splitting logic per feature.
+- **Why:** both features see the same words, and keeping `isn't` as one token is what lets negation and the stopword list work.

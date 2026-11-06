@@ -1,0 +1,18 @@
+export const STOPWORDS = new Set([
+  'a', 'about', 'above', 'after', 'again', 'against', 'all', 'also', 'am', 'an', 'and', 'any',
+  'are', "aren't", 'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between',
+  'both', 'but', 'by', 'can', "can't", 'cannot', 'could', "couldn't", 'did', "didn't", 'do',
+  'does', "doesn't", 'doing', "don't", 'down', 'during', 'each', 'even', 'few', 'for', 'from',
+  'further', 'get', 'got', 'had', "hadn't", 'has', "hasn't", 'have', "haven't", 'having', 'he',
+  'her', 'here', 'hers', 'herself', 'him', 'himself', 'his', 'how', 'i', "i'd", "i'll", "i'm",
+  "i've", 'if', 'in', 'into', 'is', "isn't", 'it', "it's", 'its', 'itself', 'just', "let's",
+  'like', 'me', 'more', 'most', 'much', 'must', 'my', 'myself', 'need', 'no', 'nor', 'not',
+  'now', 'of', 'off', 'on', 'once', 'only', 'or', 'other', 'our', 'ours', 'ourselves', 'out',
+  'over', 'own', 'really', 'same', 'she', 'should', "shouldn't", 'so', 'some', 'still', 'such',
+  'than', 'that', "that's", 'the', 'their', 'theirs', 'them', 'themselves', 'then', 'there',
+  "there's", 'these', 'they', "they're", 'this', 'those', 'through', 'to', 'too', 'under',
+  'until', 'up', 'us', 'very', 'was', "wasn't", 'we', "we're", "we've", 'were', "weren't",
+  'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', "won't",
+  'would', "wouldn't", 'yet', 'you', "you're", "you've", 'your', 'yours', 'yourself',
+  'yourselves',
+])
