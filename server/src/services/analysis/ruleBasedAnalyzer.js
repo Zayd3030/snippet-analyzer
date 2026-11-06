@@ -11,9 +11,9 @@ const CATEGORY_SIGNALS = {
   Code: [
     { match: /```/, weight: 5 },
     { match: /=>/, weight: 3 },
-    { match: /console\.log|print\(|\bSELECT\b.+\bFROM\b/, weight: 3 },
+    { match: /console\.log|print\(|\bselect\s+(\*|[\w.]+(\s*,\s*[\w.]+)*)\s+from\s+\w+/i, weight: 3 }, // select needs * or a column list, so "select a date from" doesn't count
     { match: /[{};]\s*$/m, weight: 2 }, // lines ending in { } or ;
-    { match: /\b(function|const|let|return|import|export|class|def|async|await)\b/, weight: 2 },
+    { match: /\b(const|let|var)\s+\w+\s*=|\bfunction\s*\w*\s*\(|\bdef\s+\w+\(|^\s*(import|export)\s/m, weight: 2 }, // keywords only count in code-like context, "let me know" is english
     { match: /\b(bug|error|api|endpoint|refactor|deploy)\b/i, weight: 1 },
   ],
   Todo: [
@@ -26,7 +26,8 @@ const CATEGORY_SIGNALS = {
   ],
   Meeting: [
     { match: /\b(agenda|minutes|attendees|action items?)\b/i, weight: 4 },
-    { match: /\b(meeting|standup|stand-up|sync|catch-up|1:1|retro|call with)\b/i, weight: 3 },
+    { match: /\b(meeting|standup|stand-up|catch-up|1:1|retro)\b/i, weight: 3 },
+    { match: /\b(sync|call with)\b/i, weight: 2 }, // too ambiguous for 3, "sync my phone" isn't a meeting
     { match: /\b(discussed|agreed|decided|follow up|next steps)\b/i, weight: 2 },
     { match: /\b\d{1,2}(:\d{2})?\s?(am|pm)\b/i, weight: 1 },
     { match: /\b(monday|tuesday|wednesday|thursday|friday)\b/i, weight: 1 },
