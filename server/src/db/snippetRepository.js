@@ -5,8 +5,14 @@ const selectAll = db.prepare('SELECT * FROM snippets ORDER BY created_at DESC, i
 
 // RETURNING gives back the full row, so no second query to fetch it
 const insert = db.prepare(`
-  INSERT INTO snippets (title, content, created_at, updated_at)
-  VALUES (@title, @content, @createdAt, @updatedAt)
+  INSERT INTO snippets (
+    title, content, category, sentiment_score, sentiment_label, keywords, word_count,
+    created_at, updated_at
+  )
+  VALUES (
+    @title, @content, @category, @sentimentScore, @sentimentLabel, @keywords, @wordCount,
+    @createdAt, @updatedAt
+  )
   RETURNING *
 `)
 
@@ -17,6 +23,21 @@ const updateById = db.prepare(`
   UPDATE snippets
   SET title = COALESCE(@title, title),
       content = COALESCE(@content, content),
+      updated_at = @updatedAt
+  WHERE id = @id
+  RETURNING *
+`)
+
+// no COALESCE here on purpose, a failed analysis has to be able to clear old tags back to null
+const updateWithAnalysisById = db.prepare(`
+  UPDATE snippets
+  SET title = @title,
+      content = @content,
+      category = @category,
+      sentiment_score = @sentimentScore,
+      sentiment_label = @sentimentLabel,
+      keywords = @keywords,
+      word_count = @wordCount,
       updated_at = @updatedAt
   WHERE id = @id
   RETURNING *
@@ -39,13 +60,29 @@ function toSnippet(row) {
   }
 }
 
+function analysisParams({ category, sentiment, keywords, wordCount }) {
+  return {
+    category,
+    sentimentScore: sentiment?.score ?? null,
+    sentimentLabel: sentiment?.label ?? null,
+    keywords: keywords ? JSON.stringify(keywords) : null,
+    wordCount,
+  }
+}
+
 export function findAll() {
   return selectAll.all().map(toSnippet)
 }
 
-export function create({ title, content }) {
+export function create({ title, content }, analysis) {
   const now = new Date().toISOString()
-  const row = insert.get({ title, content, createdAt: now, updatedAt: now })
+  const row = insert.get({
+    title,
+    content,
+    ...analysisParams(analysis),
+    createdAt: now,
+    updatedAt: now,
+  })
   return toSnippet(row)
 }
 
@@ -54,13 +91,12 @@ export function findById(id) {
   return row ? toSnippet(row) : null
 }
 
-export function update(id, { title, content }) {
-  const row = updateById.get({
-    id,
-    title: title ?? null,
-    content: content ?? null,
-    updatedAt: new Date().toISOString(),
-  })
+// with analysis, title and content must both be passed since everything gets written
+export function update(id, { title, content }, analysis) {
+  const updatedAt = new Date().toISOString()
+  const row = analysis
+    ? updateWithAnalysisById.get({ id, title, content, ...analysisParams(analysis), updatedAt })
+    : updateById.get({ id, title: title ?? null, content: content ?? null, updatedAt })
   return row ? toSnippet(row) : null
 }
 

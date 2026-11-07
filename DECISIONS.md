@@ -66,3 +66,38 @@ Architectural choices, what was rejected, and why.
 - **Chose:** a shared `tokenize()`: lowercase, Unicode letters and digits, apostrophes kept inside words, curly apostrophes normalised.
 - **Rejected:** separate splitting logic per feature.
 - **Why:** both features see the same words, and keeping `isn't` as one token is what lets negation and the stopword list work.
+
+## snippetService between routes and repository
+- **Chose:** `services/snippetService.js` owns "analyse then save". Routes call only the service; the service calls the repository and the analysis module.
+- **Rejected:** calling `analyze()` from route handlers, or from inside the repository.
+- **Why:** handlers stay as validate → call → respond, and the repository stays pure SQL. The rules about when to analyse, what text to analyse and what to do when it fails live in one testable place.
+
+## Analyse before writing
+- **Chose:** run analysis first, then a single insert (or update) that includes the analysis columns.
+- **Rejected:** insert the snippet, then update it with analysis afterwards.
+- **Why:** one write instead of two, and there's never a moment where a row exists without the analysis it should have.
+
+## Analysis failure doesn't fail the save
+- **Chose:** if the analyzer throws, log it and save with null analysis fields. `POST /:id/analyze` can fill them in later.
+- **Rejected:** returning a 500 and dropping the write.
+- **Why:** the note is the user's data, the tags are a derived extra. Losing someone's text because tagging failed would be the worse bug.
+
+## Title is part of the analysed text, word count isn't
+- **Chose:** analyse `title + "\n" + content`, then replace `wordCount` with a count of the content alone. Done in the service, analyzer interface unchanged.
+- **Rejected:** analysing content only, or counting title words too.
+- **Why:** a title like "Standup notes" is often the strongest category hint. Word count is shown to the user as the size of what they wrote, so the title shouldn't inflate it.
+
+## Re-analyse when the title changes too
+- **Chose:** on update, re-analyse if the title **or** content differs from what's stored. Sending identical text skips analysis.
+- **Rejected:** content-only (CLAUDE.md's original wording).
+- **Why:** follows from including the title in the analysed text. Renaming a note to "Meeting notes" should be able to change its category.
+
+## Separate update statement when analysis is written
+- **Chose:** a second prepared `UPDATE` that sets title, content and every analysis column explicitly, used whenever analysis ran.
+- **Rejected:** extending the COALESCE statement to the analysis columns.
+- **Why:** COALESCE treats null as "keep the old value", but a failed re-analysis needs to write null so stale tags from the old text don't stick around.
+
+## Test mocks wrap the real modules
+- **Chose:** `vi.mock` replaces `analyze` and `findAll` with `vi.fn(realImplementation)`, and failure tests override them once.
+- **Rejected:** dependency injection through the app, or separate test files per mock.
+- **Why:** every other test exercises the real code path, and the two failure tests need no extra plumbing in the app.

@@ -16,3 +16,6 @@ const provider = pickProvider()
 export async function analyze(text) {
   return provider.analyze(text)
 }
+
+// word counting doesn't depend on which provider tags the text
+export { countWords } from './ruleBasedAnalyzer.js'

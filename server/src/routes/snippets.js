@@ -1,6 +1,13 @@
 import { Router } from 'express'
-import { create, findAll, findById, remove, update } from '../db/snippetRepository.js'
 import { validateCreate, validateUpdate } from '../middleware/validateSnippet.js'
+import {
+  createSnippet,
+  deleteSnippet,
+  getSnippet,
+  listSnippets,
+  reanalyseSnippet,
+  updateSnippet,
+} from '../services/snippetService.js'
 
 const router = Router()
 
@@ -21,28 +28,35 @@ router.param('id', (req, res, next, id) => {
 })
 
 router.get('/', (req, res) => {
-  res.json(findAll())
+  res.json(listSnippets())
 })
 
-router.post('/', validateCreate, (req, res) => {
-  res.status(201).json(create(req.body))
+// express 5 passes rejected promises from async handlers to the error handler
+router.post('/', validateCreate, async (req, res) => {
+  res.status(201).json(await createSnippet(req.body))
 })
 
 router.get('/:id', (req, res) => {
-  const snippet = findById(req.snippetId)
+  const snippet = getSnippet(req.snippetId)
   if (!snippet) return sendNotFound(res)
   res.json(snippet)
 })
 
-router.put('/:id', validateUpdate, (req, res) => {
-  const snippet = update(req.snippetId, req.body)
+router.put('/:id', validateUpdate, async (req, res) => {
+  const snippet = await updateSnippet(req.snippetId, req.body)
   if (!snippet) return sendNotFound(res)
   res.json(snippet)
 })
 
 router.delete('/:id', (req, res) => {
-  if (!remove(req.snippetId)) return sendNotFound(res)
+  if (!deleteSnippet(req.snippetId)) return sendNotFound(res)
   res.status(204).end()
+})
+
+router.post('/:id/analyze', async (req, res) => {
+  const snippet = await reanalyseSnippet(req.snippetId)
+  if (!snippet) return sendNotFound(res)
+  res.json(snippet)
 })
 
 export default router
