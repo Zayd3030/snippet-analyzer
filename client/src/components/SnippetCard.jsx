@@ -52,7 +52,8 @@ function SnippetCard({ snippet }) {
           {preview}
         </pre>
       ) : (
-        <p className="text-sm break-words text-slate-600">{preview}</p>
+        // pre-line keeps line breaks (todo lists, notes) but still collapses runs of spaces
+        <p className="text-sm whitespace-pre-line break-words text-slate-600">{preview}</p>
       )}
 
       {keywords.length > 0 && (

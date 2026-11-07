@@ -41,7 +41,7 @@ const MIN_SCORE = 3
 const TIE_BREAK_ORDER = ['Code', 'Meeting', 'Todo', 'Idea']
 
 const POSITIVE = new Set([
-  'good', 'great', 'excellent', 'amazing', 'awesome', 'love', 'like', 'happy', 'nice',
+  'good', 'great', 'excellent', 'amazing', 'awesome', 'love', 'lovely', 'like', 'happy', 'nice', 'fun',
   'fantastic', 'wonderful', 'best', 'better', 'easy', 'clean', 'fast', 'success', 'successful',
   'works', 'fixed', 'solved', 'helpful', 'useful', 'glad', 'excited', 'perfect',
 ])
