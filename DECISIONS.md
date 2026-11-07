@@ -101,3 +101,28 @@ Architectural choices, what was rejected, and why.
 - **Chose:** `vi.mock` replaces `analyze` and `findAll` with `vi.fn(realImplementation)`, and failure tests override them once.
 - **Rejected:** dependency injection through the app, or separate test files per mock.
 - **Why:** every other test exercises the real code path, and the two failure tests need no extra plumbing in the app.
+
+## Client API module with one request helper
+- **Chose:** `client/src/api/snippets.js` has a single `request()` that calls fetch, handles 204, parses JSON, and throws an `Error` carrying the server's `{ error }` message. One tiny exported function per endpoint.
+- **Rejected:** calling `fetch` from components, or adding a client like axios.
+- **Why:** components get plain data or a readable error and never deal with status codes. URLs and error handling live in one file. Fetch is enough for six endpoints.
+
+## Fetch on mount: AbortController in the effect
+- **Chose:** the effect creates an `AbortController` and aborts it in cleanup; `AbortError` is ignored.
+- **Rejected:** an `ignore` flag (only discards the result, the request still runs), and a `useRef` guard that skips the second StrictMode run (fights StrictMode instead of being cleanup-safe).
+- **Why:** StrictMode's mount → unmount → mount cancels the first request, so only one response is handled and nothing sets state after unmount. Dev tools still show two requests, the first cancelled. Production only runs once.
+
+## One status field instead of booleans
+- **Chose:** `status` is `'loading' | 'error' | 'ready'`.
+- **Rejected:** separate `isLoading` and `isError` booleans.
+- **Why:** booleans allow impossible combinations (loading and errored at once). One field means the list renders exactly one state.
+
+## Retry by re-running the effect
+- **Chose:** Retry sets status to `'loading'` and bumps a `reloadKey` that the fetch effect depends on.
+- **Rejected:** a separate fetch function called from the button.
+- **Why:** one fetch code path, so retry gets the same abort handling for free. Setting loading in the click handler avoids setting state synchronously inside the effect.
+
+## Preview truncated on the client
+- **Chose:** cards cut content to ~150 chars at the last whitespace and add an ellipsis.
+- **Rejected:** a `preview` field computed by the server.
+- **Why:** the full content is already in the response (the edit modal needs it), and preview length is a display concern that may differ per screen.
