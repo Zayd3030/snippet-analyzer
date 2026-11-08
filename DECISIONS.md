@@ -197,3 +197,23 @@ Architectural choices, what was rejected, and why.
 - **Chose:** focus jumps to the next card's Edit button (or the previous card's, or "New snippet" when the list is empty) before the deleted card leaves state. That target is found by element id.
 - **Rejected:** letting focus fall to `<body>`, or a ref map for every card's buttons.
 - **Why:** keyboard and screen-reader users keep their place in the list. The neighbouring cards stay mounted, so their buttons can be focused straight away. One id lookup is simpler than keeping a ref per card.
+
+## Optional .env with defaults in code
+- **Chose:** server scripts use `node --env-file-if-exists=.env`. Every variable already has a default in code (`PORT` 3001, `DB_PATH` ./data/snippets.db, `ANALYZER` rules), and `database.js` creates the data folder.
+- **Rejected:** `--env-file=.env` (Node exits if the file is missing), a postinstall script that copies `.env.example`, and adding `dotenv`.
+- **Why:** a fresh clone runs with zero config, no extra dependency. `.env` is only for overriding defaults.
+
+## Node 22.12 minimum
+- **Chose:** `"engines": { "node": ">=22.12.0" }` in both package.json files.
+- **Rejected:** `>=22` (what better-sqlite3 alone asks for).
+- **Why:** the strictest dependency sets the floor. vitest 5, vite 8 and oxlint all need 22.12+, and `--env-file-if-exists` needs 22.9+. One number for both apps is easier to state in the README.
+
+## Unreachable server detected by an empty 5xx
+- **Chose:** the client API module shows "Can't reach the server…" when fetch itself throws, or when a 500/502/503/504 comes back with no JSON body. Any response with an `{ error }` body keeps the server's message.
+- **Rejected:** treating every 5xx as "unreachable", or showing the raw status.
+- **Why:** when the server is down, the Vite proxy answers with an empty 502 (checked against Vite 8, older versions sent 500), which reads like a server bug to the user. Our server always sends `{ error }` with its own 500s, so the missing body is what tells the two apart.
+
+## Long words wrap anywhere, single-column grid is explicit
+- **Chose:** `wrap-anywhere` on card titles, previews, keywords and the delete notice, and `grid-cols-1` as the base grid.
+- **Rejected:** `break-words`, and clamping titles.
+- **Why:** `break-words` doesn't lower an element's minimum width, so on phones the implicit `auto` grid column grew to fit a long URL or token and the card overflowed the screen. `grid-cols-1` is `minmax(0, 1fr)`, so the column can't grow. Titles are capped at 120 chars, so wrapping is enough.

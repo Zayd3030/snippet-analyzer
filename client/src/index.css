@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+/* tailwind 4 resets buttons to the default cursor */
+@layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}

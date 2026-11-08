@@ -1,6 +1,8 @@
 import SnippetCard from './SnippetCard.jsx'
 
-const GRID = 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+// grid-cols-1 matters: without it the phone layout gets an auto track that grows to fit
+// the longest unbroken word instead of wrapping it
+const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
 const SKELETON_COUNT = 6
 
 function SkeletonCard() {

@@ -22,8 +22,8 @@ function validate(title, content) {
 
 const BUTTON =
   'rounded-md px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-50'
-const PRIMARY = `${BUTTON} bg-slate-900 text-white hover:bg-slate-700`
-const SECONDARY = `${BUTTON} border border-slate-300 bg-white hover:bg-slate-50`
+const PRIMARY = `${BUTTON} bg-slate-900 text-white enabled:hover:bg-slate-700`
+const SECONDARY = `${BUTTON} border border-slate-300 bg-white enabled:hover:bg-slate-50`
 const FIELD =
   'mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus-visible:border-slate-900 focus-visible:outline-2 focus-visible:outline-slate-900 aria-invalid:border-red-500'
 
@@ -140,10 +140,10 @@ function SnippetModal({ initialSnippet, onSaved, onClose }) {
       }}
       onPointerDown={handlePointerDown}
       onClick={handleClick}
-      className="m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-lg bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-900/50"
+      className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-lg bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-900/50"
     >
       {view === 'form' ? (
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} noValidate className="space-y-4 p-6">
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} noValidate className="space-y-4 p-4 sm:p-6">
           <h2 id="snippet-modal-heading" className="text-lg font-semibold">
             {isEdit ? 'Edit snippet' : 'New snippet'}
           </h2>
@@ -212,7 +212,7 @@ function SnippetModal({ initialSnippet, onSaved, onClose }) {
           </div>
         </form>
       ) : (
-        <div className="space-y-5 p-6" aria-live="polite">
+        <div className="space-y-5 p-4 sm:p-6" aria-live="polite">
           <h2 id="snippet-modal-heading" className="text-lg font-semibold">
             {snippet.category ? 'Saved and analysed' : 'Saved'}
           </h2>

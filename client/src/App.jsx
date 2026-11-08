@@ -121,7 +121,7 @@ function App() {
         <div role="status" aria-live="polite">
           {notice && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              <p>{notice.message}</p>
+              <p className="min-w-0 wrap-anywhere">{notice.message}</p>
               <button
                 type="button"
                 onClick={() => setNotice(null)}

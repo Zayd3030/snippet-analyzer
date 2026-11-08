@@ -3,9 +3,9 @@ import { analyzeSnippet } from '../api/snippets.js'
 import AnalysisBadges, { KeywordTags } from './AnalysisBadges.jsx'
 
 const ACTION =
-  'rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-50'
+  'rounded px-2 py-1 text-xs font-medium text-slate-600 enabled:hover:bg-slate-100 enabled:hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-50'
 const DESTRUCTIVE_ACTION =
-  'rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50'
+  'rounded px-2 py-1 text-xs font-medium text-red-600 enabled:hover:bg-red-50 enabled:hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50'
 
 const PREVIEW_LENGTH = 150
 
@@ -88,17 +88,17 @@ function SnippetCard({ snippet, onEdit, onSaved, onDelete }) {
       aria-busy={reanalysing}
       className="flex h-full flex-col gap-3 rounded-lg bg-white p-4 ring-1 ring-slate-200"
     >
-      <h2 className="font-semibold break-words">{title}</h2>
+      <h2 className="font-semibold wrap-anywhere">{title}</h2>
 
       <AnalysisBadges category={category} sentimentLabel={sentimentLabel} sentimentScore={sentimentScore} />
 
       {category === 'Code' ? (
-        <pre className="overflow-hidden rounded bg-slate-50 p-2 font-mono text-xs whitespace-pre-wrap break-words text-slate-700">
+        <pre className="overflow-hidden rounded bg-slate-50 p-2 font-mono text-xs whitespace-pre-wrap wrap-anywhere text-slate-700">
           {preview}
         </pre>
       ) : (
         // pre-wrap keeps line breaks and indentation (nested lists, notes) but still wraps long lines
-        <p className="text-sm whitespace-pre-wrap break-words text-slate-600">{preview}</p>
+        <p className="text-sm whitespace-pre-wrap wrap-anywhere text-slate-600">{preview}</p>
       )}
 
       <KeywordTags keywords={keywords} />

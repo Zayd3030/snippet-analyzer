@@ -46,7 +46,7 @@ export function KeywordTags({ keywords }) {
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label="Keywords">
       {keywords.slice(0, 5).map((keyword) => (
-        <li key={keyword} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+        <li key={keyword} className="max-w-full rounded bg-slate-100 px-1.5 py-0.5 text-xs wrap-anywhere text-slate-600">
           {keyword}
         </li>
       ))}
