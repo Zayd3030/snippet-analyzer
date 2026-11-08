@@ -6,10 +6,10 @@ A small full-stack app for saving text snippets (notes, code, todo lists, meetin
 
 ## Prerequisites
 
-- Node.js 22.12 or newer
+- Node.js 22.13 or newer
 - npm
 
-That's all. SQLite ships inside `better-sqlite3`, so there's no database to install.
+That's all. SQLite is built into Node (`node:sqlite`), so there's no database to install and nothing to compile.
 
 ## Getting started
 
@@ -129,7 +129,7 @@ Routes never touch SQL or the analyzer directly. The service decides when to ana
 
 Key decisions (the full list with rejected alternatives is in [DECISIONS.md](DECISIONS.md)):
 
-- **better-sqlite3's synchronous API.** Local queries take microseconds, and the repository stays plain functions.
+- **Node's built-in `node:sqlite` with its synchronous API.** No native build on install, local queries take microseconds, and the repository stays plain functions.
 - **Analyse before writing, in one insert or update.** A failed analysis never blocks the save.
 - **Title is analysed, word count is content only.** The title is the best category hint, but word count describes what the user wrote.
 - **Optimistic delete.** The card disappears immediately and comes back in its sorted position if the request fails. A 404 counts as success.

@@ -3,6 +3,7 @@
 Architectural choices, what was rejected, and why.
 
 ## SQLite driver: better-sqlite3
+- **Superseded** by "SQLite driver: node:sqlite" below. Kept for the history.
 - **Chose:** `better-sqlite3` (synchronous API).
 - **Rejected:** `sqlite3` (callback-based async).
 - **Why:** SQLite queries on a local file take microseconds, so blocking the event loop briefly costs nothing at this scale. The sync API makes the repository plain functions with no callback or promise wrapping, and it's faster in practice.
@@ -203,10 +204,10 @@ Architectural choices, what was rejected, and why.
 - **Rejected:** `--env-file=.env` (Node exits if the file is missing), a postinstall script that copies `.env.example`, and adding `dotenv`.
 - **Why:** a fresh clone runs with zero config, no extra dependency. `.env` is only for overriding defaults.
 
-## Node 22.12 minimum
-- **Chose:** `"engines": { "node": ">=22.12.0" }` in both package.json files.
-- **Rejected:** `>=22` (what better-sqlite3 alone asks for).
-- **Why:** the strictest dependency sets the floor. vitest 5, vite 8 and oxlint all need 22.12+, and `--env-file-if-exists` needs 22.9+. One number for both apps is easier to state in the README.
+## Node 22.13 minimum
+- **Chose:** `"engines": { "node": ">=22.13.0" }` in both package.json files.
+- **Rejected:** `>=22` (what better-sqlite3 alone used to ask for), and 22.12 (the floor before the node:sqlite switch).
+- **Why:** the strictest requirement sets the floor. `node:sqlite` runs without a flag from 22.13, vitest 5, vite 8 and oxlint need 22.12+, and `--env-file-if-exists` needs 22.9+. One number for both apps is easier to state in the README.
 
 ## Unreachable server detected by an empty 5xx
 - **Chose:** the client API module shows "Can't reach the server…" when fetch itself throws, or when a 500/502/503/504 comes back with no JSON body. Any response with an `{ error }` body keeps the server's message.
@@ -217,3 +218,8 @@ Architectural choices, what was rejected, and why.
 - **Chose:** `wrap-anywhere` on card titles, previews, keywords and the delete notice, and `grid-cols-1` as the base grid.
 - **Rejected:** `break-words`, and clamping titles.
 - **Why:** `break-words` doesn't lower an element's minimum width, so on phones the implicit `auto` grid column grew to fit a long URL or token and the card overflowed the screen. `grid-cols-1` is `minmax(0, 1fr)`, so the column can't grow. Titles are capped at 120 chars, so wrapping is enough.
+
+## SQLite driver: node:sqlite
+- **Chose:** Node's built-in `node:sqlite` (`DatabaseSync`).
+- **Rejected:** `better-sqlite3`. When no prebuilt binary matches the platform and Node version, its install falls back to `node-gyp rebuild`, which needs a C++ toolchain (Visual Studio Build Tools on Windows). A fresh clone on Windows failed exactly like that.
+- **Why:** nothing to install or compile, so a reviewer only needs Node. The API has the same synchronous shape (`prepare`, `get`, `all`, `run`, `@name` params, `RETURNING`), so the repository didn't change. Costs: it's still marked experimental on the Node 22 line, which prints an ExperimentalWarning there, and it has fewer helpers than better-sqlite3 (no `.pluck()` or `.transaction()` wrapper), none of which this app uses. Rows come back as null-prototype objects, which the row mapper copies into plain ones anyway.

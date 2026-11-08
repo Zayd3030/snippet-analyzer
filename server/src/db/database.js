@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import Database from 'better-sqlite3'
+import { DatabaseSync } from 'node:sqlite'
 
 const schema = `
   CREATE TABLE IF NOT EXISTS snippets (
@@ -22,7 +22,7 @@ export function createDatabase(dbPath) {
     fs.mkdirSync(path.dirname(dbPath), { recursive: true })
   }
 
-  const db = new Database(dbPath)
+  const db = new DatabaseSync(dbPath)
   db.exec(schema)
   return db
 }
