@@ -11,6 +11,8 @@ A small full-stack app for saving text snippets (notes, code, todo lists, meetin
 
 That's all. SQLite is built into Node (`node:sqlite`), so there's no database to install and nothing to compile.
 
+On Node 22 you may see an ExperimentalWarning for SQLite on startup. It's harmless.
+
 ## Getting started
 
 Run the server and the client in two terminals. The commands are the same in PowerShell and bash.
