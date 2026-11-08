@@ -15,23 +15,27 @@ On Node 22 you may see an ExperimentalWarning for SQLite on startup. It's harmle
 
 ## Getting started
 
-Run the server and the client in two terminals. The commands are the same in PowerShell and bash.
+The server and client are separate apps with their own dependencies, so each needs its own `npm install`. There's no root `package.json`, so running `npm install` in the repo root won't work.
 
-Terminal 1, the API on http://localhost:3001:
+Run them in two terminals, starting from the repo root. The commands are the same in PowerShell and bash.
+
+Terminal 1, the API:
 
 ```sh
 cd server
 npm install
-npm run dev
+npm run dev   # http://localhost:3001
 ```
 
-Terminal 2, the UI on http://localhost:5173 (or whichever port Vite prints):
+Terminal 2, the UI:
 
 ```sh
 cd client
 npm install
-npm run dev
+npm run dev   # http://localhost:5173, or whichever port Vite prints
 ```
+
+Install before starting. If an install fails, stop any running dev server, delete that folder's `node_modules` and run `npm install` again.
 
 Open http://localhost:5173 (or whichever port Vite prints). The Vite dev server proxies `/api` to port 3001, so the client needs no config and the server needs no CORS.
 
