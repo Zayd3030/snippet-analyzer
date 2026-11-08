@@ -157,3 +157,13 @@ Architectural choices, what was rejected, and why.
 - **Chose:** each card tracks its own `reanalysing` and error state, calls `analyzeSnippet`, and hands the result to App's upsert.
 - **Rejected:** a map of busy ids in App.
 - **Why:** only that card needs to know it's busy. App still owns the snippet data.
+
+## Sentiment measures mood, not topic
+- **Chose:** the word lists only hold words that express how the writer feels. Removed topic words: bug(s), error(s), crash(es), fail/failed/failing, issue, problem from negative, and fixed, solved, works, clean, fast, like from positive. Added everyday mood words (thanks, enjoyed, proud, smooth / frustrated, worried, tired, confusing and similar).
+- **Rejected:** keeping tech words and weighting them lower, or separate word lists per category.
+- **Why:** in a snippet tool, "bug" or "error" usually says what a note is about, not how the writer feels, so every dev note read as negative. "like" was also mostly a preposition ("looks like a timeout"). Broken, slow and hard stay, because they still read as complaints in most contexts.
+
+## Python block lines as a Code signal
+- **Chose:** a weight-2 Code signal for a line that starts with a Python block keyword (def, class, for, if, elif, else, while, try, except, with) and ends in a colon. Case-sensitive.
+- **Rejected:** a bare "line ends in a colon" signal, or raising the weight of the existing `def name(` signal.
+- **Why:** Python has no braces or semicolons, so a plain function only hit the `def` signal (2) and fell below the threshold. Requiring the keyword at the start of the line keeps prose like "Agenda: release plan" out. Case-sensitivity skips sentences that start with "If" or "For". A lowercase prose line like "for the record:" can still match, but at weight 2 it can't make something Code on its own.

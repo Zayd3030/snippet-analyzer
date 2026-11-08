@@ -75,8 +75,8 @@ function SnippetCard({ snippet, onEdit, onSaved }) {
           {preview}
         </pre>
       ) : (
-        // pre-line keeps line breaks (todo lists, notes) but still collapses runs of spaces
-        <p className="text-sm whitespace-pre-line break-words text-slate-600">{preview}</p>
+        // pre-wrap keeps line breaks and indentation (nested lists, notes) but still wraps long lines
+        <p className="text-sm whitespace-pre-wrap break-words text-slate-600">{preview}</p>
       )}
 
       <KeywordTags keywords={keywords} />

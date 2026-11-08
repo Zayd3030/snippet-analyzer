@@ -14,6 +14,9 @@ const CATEGORY_SIGNALS = {
     { match: /console\.log|print\(|\bselect\s+(\*|[\w.]+(\s*,\s*[\w.]+)*)\s+from\s+\w+/i, weight: 3 }, // select needs * or a column list, so "select a date from" doesn't count
     { match: /[{};]\s*$/m, weight: 2 }, // lines ending in { } or ;
     { match: /\b(const|let|var)\s+\w+\s*=|\bfunction\s*\w*\s*\(|\bdef\s+\w+\(|^\s*(import|export)\s/m, weight: 2 }, // keywords only count in code-like context, "let me know" is english
+    // python block lines like "def total(items):" or "for x in xs:". Case-sensitive on purpose,
+    // so a sentence starting "If" or "For" doesn't count
+    { match: /^\s*(def|class|for|if|elif|else|while|try|except|with)\b.*:\s*$/m, weight: 2 },
     { match: /\b(bug|error|api|endpoint|refactor|deploy)\b/i, weight: 1 },
   ],
   Todo: [
@@ -40,16 +43,19 @@ const MIN_SCORE = 3
 // most specific first, code patterns are rarely accidental, "maybe" is everywhere
 const TIE_BREAK_ORDER = ['Code', 'Meeting', 'Todo', 'Idea']
 
+// sentiment measures mood, not topic. Words like "bug", "error" or "fixed" say what a dev
+// note is about, so having them here pushed every tech note one way or the other
 const POSITIVE = new Set([
-  'good', 'great', 'excellent', 'amazing', 'awesome', 'love', 'lovely', 'like', 'happy', 'nice', 'fun',
-  'fantastic', 'wonderful', 'best', 'better', 'easy', 'clean', 'fast', 'success', 'successful',
-  'works', 'fixed', 'solved', 'helpful', 'useful', 'glad', 'excited', 'perfect',
+  'good', 'great', 'excellent', 'amazing', 'awesome', 'love', 'lovely', 'happy', 'nice', 'fun',
+  'fantastic', 'wonderful', 'best', 'better', 'easy', 'success', 'successful', 'helpful',
+  'useful', 'glad', 'excited', 'perfect', 'thanks', 'enjoy', 'enjoyed', 'cool', 'proud',
+  'pleased', 'beautiful', 'improved', 'smooth',
 ])
 
 const NEGATIVE = new Set([
   'bad', 'terrible', 'awful', 'horrible', 'hate', 'worst', 'worse', 'sad', 'angry', 'annoying',
-  'broken', 'bug', 'bugs', 'crash', 'crashes', 'error', 'errors', 'fail', 'failed', 'failing',
-  'slow', 'messy', 'hard', 'difficult', 'problem', 'issue', 'stuck', 'wrong',
+  'broken', 'slow', 'messy', 'hard', 'difficult', 'stuck', 'wrong', 'frustrated', 'frustrating',
+  'disappointed', 'worried', 'tired', 'confusing', 'boring', 'ugly',
 ])
 
 const NEGATORS = new Set([

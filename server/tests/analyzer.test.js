@@ -119,6 +119,21 @@ describe('category', () => {
     expect(detectCategory(text)).toBe('Code')
   })
 
+  it('detects a python function with no braces or semicolons', () => {
+    const text = [
+      'def total_price(items):',
+      '    total = 0',
+      '    for item in items:',
+      '        total += item.price',
+      '    return total',
+    ].join('\n')
+    expect(detectCategory(text)).toBe('Code')
+  })
+
+  it("doesn't treat a prose line ending in a colon as code", () => {
+    expect(detectCategory('Agenda: release plan')).not.toBe('Code')
+  })
+
   it('detects a todo list', () => {
     const text = [
       'Weekend errands',
