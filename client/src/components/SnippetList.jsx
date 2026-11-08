@@ -23,7 +23,7 @@ function SkeletonCard() {
   )
 }
 
-function SnippetList({ snippets, status, error, onRetry, onEdit, onSaved }) {
+function SnippetList({ snippets, status, error, onRetry, onEdit, onSaved, onDelete }) {
   if (status === 'loading') {
     return (
       <>
@@ -70,7 +70,7 @@ function SnippetList({ snippets, status, error, onRetry, onEdit, onSaved }) {
     <ul className={GRID}>
       {snippets.map((snippet) => (
         <li key={snippet.id}>
-          <SnippetCard snippet={snippet} onEdit={onEdit} onSaved={onSaved} />
+          <SnippetCard snippet={snippet} onEdit={onEdit} onSaved={onSaved} onDelete={onDelete} />
         </li>
       ))}
     </ul>

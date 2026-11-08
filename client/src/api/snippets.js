@@ -15,7 +15,10 @@ async function request(path = '', { method = 'GET', body, signal } = {}) {
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(data?.error ?? `Request failed (${response.status})`)
+    const error = new Error(data?.error ?? `Request failed (${response.status})`)
+    // callers sometimes need the status itself, e.g. a 404 on delete means it's already gone
+    error.status = response.status
+    throw error
   }
 
   return data

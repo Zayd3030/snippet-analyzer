@@ -167,3 +167,33 @@ Architectural choices, what was rejected, and why.
 - **Chose:** a weight-2 Code signal for a line that starts with a Python block keyword (def, class, for, if, elif, else, while, try, except, with) and ends in a colon. Case-sensitive.
 - **Rejected:** a bare "line ends in a colon" signal, or raising the weight of the existing `def name(` signal.
 - **Why:** Python has no braces or semicolons, so a plain function only hit the `def` signal (2) and fell below the threshold. Requiring the keyword at the start of the line keeps prose like "Agenda: release plan" out. Case-sensitivity skips sentences that start with "If" or "For". A lowercase prose line like "for the record:" can still match, but at weight 2 it can't make something Code on its own.
+
+## Optimistic delete
+- **Chose:** remove the card from state immediately, then call the API. On failure, put it back and show a notice.
+- **Rejected:** pessimistic delete (wait for the server, then remove).
+- **Why:** deletes almost always succeed and the server's answer adds nothing to show, so waiting only makes the UI feel slow. Rollback is cheap because the snippet object is still in hand. Pessimistic is the better fit when failure is common, or when the response carries data the UI needs, like the analysis on create and edit.
+
+## 404 on delete counts as success
+- **Chose:** a 404 from `DELETE /:id` leaves the snippet removed, with no notice.
+- **Rejected:** treating every non-2xx as a failure and restoring.
+- **Why:** the goal is "this snippet shouldn't exist", and a 404 says it doesn't, whether another tab deleted it or a retried request already did. Restoring it would bring back a card that can't be edited or deleted.
+
+## Inline confirm instead of window.confirm
+- **Chose:** Delete swaps the card's actions for "Delete this snippet?" with Confirm and Cancel. Focus goes to Cancel, and Escape backs out.
+- **Rejected:** `window.confirm`.
+- **Why:** the native dialog blocks the page, can't be styled, shows the site's address as its title, and some browsers let users suppress it. Inline, the confirm stays next to the thing being deleted. Focus on Cancel means a stray Enter is harmless.
+
+## Rollback restores by sort order
+- **Chose:** a failed delete re-inserts the snippet at its newest-first position (`createdAt`, then `id`).
+- **Rejected:** remembering the index it was removed from.
+- **Why:** the list can change while the request is in flight (a new snippet goes on top), which shifts indexes. Sort order is how the server lists them, so the card always lands where a refresh would put it.
+
+## Delete disabled while re-analysing
+- **Chose:** a card's Delete button is disabled while its re-analyse request is running. Re-analyse is hidden while the delete confirm is showing.
+- **Rejected:** allowing both at once.
+- **Why:** a re-analyse response arriving after the delete would go through App's upsert, see an unknown id and add the deleted snippet back.
+
+## Focus moves before the card is removed
+- **Chose:** focus jumps to the next card's Edit button (or the previous card's, or "New snippet" when the list is empty) before the deleted card leaves state. That target is found by element id.
+- **Rejected:** letting focus fall to `<body>`, or a ref map for every card's buttons.
+- **Why:** keyboard and screen-reader users keep their place in the list. The neighbouring cards stay mounted, so their buttons can be focused straight away. One id lookup is simpler than keeping a ref per card.

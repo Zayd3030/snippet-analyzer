@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { analyzeSnippet } from '../api/snippets.js'
 import AnalysisBadges, { KeywordTags } from './AnalysisBadges.jsx'
 
 const ACTION =
   'rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-50'
+const DESTRUCTIVE_ACTION =
+  'rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50'
 
 const PREVIEW_LENGTH = 150
 
@@ -41,13 +43,33 @@ function formatRelativeTime(iso) {
   return relativeTime.format(0, 'second')
 }
 
-function SnippetCard({ snippet, onEdit, onSaved }) {
+function SnippetCard({ snippet, onEdit, onSaved, onDelete }) {
   const { id, title, content, category, sentimentLabel, sentimentScore, keywords, wordCount, createdAt } =
     snippet
   const preview = truncatePreview(content)
   // kept on the card so only this one shows a loading state
   const [reanalysing, setReanalysing] = useState(false)
   const [reanalyseError, setReanalyseError] = useState(null)
+  const [confirming, setConfirming] = useState(false)
+  const cancelRef = useRef(null)
+  const deleteRef = useRef(null)
+  // only send focus back to Delete when the user backed out, not on first render
+  const returnFocus = useRef(false)
+
+  useEffect(() => {
+    // Cancel gets focus, so a stray Enter backs out instead of deleting
+    if (confirming) {
+      cancelRef.current.focus()
+    } else if (returnFocus.current) {
+      returnFocus.current = false
+      deleteRef.current.focus()
+    }
+  }, [confirming])
+
+  function cancelDelete() {
+    returnFocus.current = true
+    setConfirming(false)
+  }
 
   async function handleReanalyse() {
     setReanalysing(true)
@@ -96,20 +118,55 @@ function SnippetCard({ snippet, onEdit, onSaved }) {
           </p>
         )}
 
-        <div className="-ml-2 flex gap-1 border-t border-slate-100 pt-2">
-          <button type="button" onClick={() => onEdit(snippet)} aria-label={`Edit ${title}`} className={ACTION}>
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={handleReanalyse}
-            disabled={reanalysing}
-            aria-label={`Re-analyse ${title}`}
-            className={ACTION}
+        {confirming ? (
+          <div
+            role="group"
+            aria-label="Confirm delete"
+            onKeyDown={(event) => event.key === 'Escape' && cancelDelete()}
+            className="-ml-2 flex flex-wrap items-center gap-1 border-t border-slate-100 pt-2"
           >
-            {reanalysing ? 'Analysing…' : 'Re-analyse'}
-          </button>
-        </div>
+            <span className="px-2 text-xs font-medium text-slate-900">Delete this snippet?</span>
+            <button type="button" onClick={() => onDelete(snippet)} className={DESTRUCTIVE_ACTION}>
+              Confirm
+            </button>
+            <button ref={cancelRef} type="button" onClick={cancelDelete} className={ACTION}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="-ml-2 flex gap-1 border-t border-slate-100 pt-2">
+            <button
+              id={`snippet-${id}-edit`}
+              type="button"
+              onClick={() => onEdit(snippet)}
+              aria-label={`Edit ${title}`}
+              className={ACTION}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={handleReanalyse}
+              disabled={reanalysing}
+              aria-label={`Re-analyse ${title}`}
+              className={ACTION}
+            >
+              {reanalysing ? 'Analysing…' : 'Re-analyse'}
+            </button>
+            {/* disabled mid re-analyse: if that response landed after the delete, the upsert in
+                App would see an unknown id and add the deleted snippet back to the list */}
+            <button
+              ref={deleteRef}
+              type="button"
+              onClick={() => setConfirming(true)}
+              disabled={reanalysing}
+              aria-label={`Delete ${title}`}
+              className={`${DESTRUCTIVE_ACTION} ml-auto`}
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </footer>
     </article>
   )
