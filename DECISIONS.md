@@ -126,3 +126,34 @@ Architectural choices, what was rejected, and why.
 - **Chose:** cards cut content to ~150 chars at the last whitespace and add an ellipsis.
 - **Rejected:** a `preview` field computed by the server.
 - **Why:** the full content is already in the response (the edit modal needs it), and preview length is a display concern that may differ per screen.
+
+## Modal: native <dialog> with showModal()
+- **Chose:** a `<dialog>` opened with `showModal()`. The browser makes the rest of the page inert (focus can't leave), handles Escape via the `cancel` event, draws `::backdrop`, puts it in the top layer and returns focus to the opening button on close.
+- **Rejected:** a custom modal (a fixed div plus a hand-written focus trap, Escape listener, scroll handling and `aria-modal`), or a library.
+- **Why:** less code and fewer accessibility bugs. Costs: it's imperative (a ref and an effect instead of an `open` prop), backdrop clicks need manual handling, open/close animations are harder, and Chrome may skip the `cancel` event on a repeated Escape with no user interaction in between, which closes the modal without the unsaved-changes confirm. Acceptable for an internal tool.
+- `showModal()` runs once on mount with no `close()` in cleanup. StrictMode's fake unmount would otherwise queue a `close` event and shut the modal straight away in dev.
+
+## Modal state is one value, mounted only while open
+- **Chose:** `modal` in App is `null`, `{ mode: 'create' }` or `{ mode: 'edit', snippet }`. The modal component only exists while it's open.
+- **Rejected:** separate `isOpen`, `mode` and `editingSnippet` state, and an always-mounted modal that resets its own form.
+- **Why:** no impossible combinations, and every open starts from fresh form state without a reset effect.
+
+## Update the list from the API response
+- **Chose:** create, update and re-analyse return the saved snippet, and App upserts it into `snippets` (replace by id, otherwise prepend).
+- **Rejected:** refetching the whole list after each change.
+- **Why:** one request instead of two, no loading flash, and scroll position stays put. It's safe because the server response is the stored row, so local state can't drift from it. A refetch would only matter with multiple users editing at once.
+
+## Client validation duplicates the server limits
+- **Chose:** the modal copies the server's rules (trimmed length, required, 120 / 10,000) and its exact messages for instant feedback. Server errors are still shown as they come back.
+- **Rejected:** server-only validation, or sharing the limits through a package or a `/limits` endpoint.
+- **Why:** the server stays the source of truth, so a mismatch can only cause an extra round trip, never bad data. Two small, stable numbers don't justify shared-code plumbing in a two-app repo. The cost is remembering to change both places.
+
+## Show the analysis in the modal after save
+- **Chose:** on save the modal switches to a result view (category shown large, sentiment, keywords, word count) with Done and Edit buttons. Focus moves to Done.
+- **Rejected:** closing the modal and relying on the new card's badges.
+- **Why:** the brief asks for the classification to be visible immediately. A result view makes the tag the thing you look at, not something to spot in a grid. If analysis failed, it says so and points to Re-analyse.
+
+## Re-analyse state lives on the card
+- **Chose:** each card tracks its own `reanalysing` and error state, calls `analyzeSnippet`, and hands the result to App's upsert.
+- **Rejected:** a map of busy ids in App.
+- **Why:** only that card needs to know it's busy. App still owns the snippet data.

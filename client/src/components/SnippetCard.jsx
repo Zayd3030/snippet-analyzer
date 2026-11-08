@@ -1,4 +1,9 @@
-import AnalysisBadges from './AnalysisBadges.jsx'
+import { useState } from 'react'
+import { analyzeSnippet } from '../api/snippets.js'
+import AnalysisBadges, { KeywordTags } from './AnalysisBadges.jsx'
+
+const ACTION =
+  'rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-50'
 
 const PREVIEW_LENGTH = 150
 
@@ -36,13 +41,31 @@ function formatRelativeTime(iso) {
   return relativeTime.format(0, 'second')
 }
 
-function SnippetCard({ snippet }) {
-  const { title, content, category, sentimentLabel, sentimentScore, keywords, wordCount, createdAt } =
+function SnippetCard({ snippet, onEdit, onSaved }) {
+  const { id, title, content, category, sentimentLabel, sentimentScore, keywords, wordCount, createdAt } =
     snippet
   const preview = truncatePreview(content)
+  // kept on the card so only this one shows a loading state
+  const [reanalysing, setReanalysing] = useState(false)
+  const [reanalyseError, setReanalyseError] = useState(null)
+
+  async function handleReanalyse() {
+    setReanalysing(true)
+    setReanalyseError(null)
+    try {
+      onSaved(await analyzeSnippet(id))
+    } catch (err) {
+      setReanalyseError(`Re-analyse failed: ${err.message}`)
+    } finally {
+      setReanalysing(false)
+    }
+  }
 
   return (
-    <article className="flex h-full flex-col gap-3 rounded-lg bg-white p-4 ring-1 ring-slate-200">
+    <article
+      aria-busy={reanalysing}
+      className="flex h-full flex-col gap-3 rounded-lg bg-white p-4 ring-1 ring-slate-200"
+    >
       <h2 className="font-semibold break-words">{title}</h2>
 
       <AnalysisBadges category={category} sentimentLabel={sentimentLabel} sentimentScore={sentimentScore} />
@@ -56,22 +79,37 @@ function SnippetCard({ snippet }) {
         <p className="text-sm whitespace-pre-line break-words text-slate-600">{preview}</p>
       )}
 
-      {keywords.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5" aria-label="Keywords">
-          {keywords.slice(0, 5).map((keyword) => (
-            <li key={keyword} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
-              {keyword}
-            </li>
-          ))}
-        </ul>
-      )}
+      <KeywordTags keywords={keywords} />
 
       {/* mt-auto keeps the footer at the bottom when cards in a row have different heights */}
-      <footer className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-slate-500">
-        {wordCount != null ? <span>{wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}</span> : <span />}
-        <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()}>
-          {formatRelativeTime(createdAt)}
-        </time>
+      <footer className="mt-auto space-y-2 pt-1">
+        <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+          {wordCount != null ? <span>{wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}</span> : <span />}
+          <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()}>
+            {formatRelativeTime(createdAt)}
+          </time>
+        </div>
+
+        {reanalyseError && (
+          <p role="alert" className="text-xs text-red-600">
+            {reanalyseError}
+          </p>
+        )}
+
+        <div className="-ml-2 flex gap-1 border-t border-slate-100 pt-2">
+          <button type="button" onClick={() => onEdit(snippet)} aria-label={`Edit ${title}`} className={ACTION}>
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={handleReanalyse}
+            disabled={reanalysing}
+            aria-label={`Re-analyse ${title}`}
+            className={ACTION}
+          >
+            {reanalysing ? 'Analysing…' : 'Re-analyse'}
+          </button>
+        </div>
       </footer>
     </article>
   )

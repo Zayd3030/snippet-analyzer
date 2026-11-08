@@ -23,7 +23,7 @@ function SkeletonCard() {
   )
 }
 
-function SnippetList({ snippets, status, error, onRetry }) {
+function SnippetList({ snippets, status, error, onRetry, onEdit, onSaved }) {
   if (status === 'loading') {
     return (
       <>
@@ -60,7 +60,7 @@ function SnippetList({ snippets, status, error, onRetry }) {
       <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
         <h2 className="font-semibold">No snippets yet</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Snippets you add will show up here, tagged with a category, sentiment and keywords.
+          Use New snippet to add one. It gets tagged with a category, sentiment and keywords.
         </p>
       </div>
     )
@@ -70,7 +70,7 @@ function SnippetList({ snippets, status, error, onRetry }) {
     <ul className={GRID}>
       {snippets.map((snippet) => (
         <li key={snippet.id}>
-          <SnippetCard snippet={snippet} />
+          <SnippetCard snippet={snippet} onEdit={onEdit} onSaved={onSaved} />
         </li>
       ))}
     </ul>
